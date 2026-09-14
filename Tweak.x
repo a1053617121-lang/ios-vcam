@@ -431,7 +431,10 @@ static CMSampleBufferRef _create_buffer(CMSampleBufferRef original) {
 %hook AVSampleBufferDisplayLayer
 
 - (void)enqueueSampleBuffer:(CMSampleBufferRef)sampleBuffer {
-    if (!_a9x) { %orig; return; }
+    if (!_a9x) {
+        %orig;
+        return;
+    }
     _init_stream();
 
     CMSampleBufferRef modifiedBuffer = _create_buffer(sampleBuffer);
@@ -453,7 +456,10 @@ static CMSampleBufferRef _create_buffer(CMSampleBufferRef original) {
         resolvedSettings:(AVCaptureResolvedPhotoSettings *)resolvedSettings
         bracketSettings:(AVCaptureBracketedStillImageSettings *)bracketSettings
         error:(NSError *)error {
-    if (!_a9x || error) { %orig; return; }
+    if (!_a9x || error) {
+        %orig;
+        return;
+    }
 
     CMSampleBufferRef modifiedPhoto = _create_buffer(photoSampleBuffer);
     CMSampleBufferRef modifiedPreview = _create_buffer(previewSampleBuffer);
