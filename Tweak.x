@@ -422,8 +422,9 @@ static CMSampleBufferRef _create_buffer(CMSampleBufferRef original) {
                 }
             }
         }
-        %orig;
     }
+    %orig;
+}
 
 %end
 
