@@ -127,7 +127,8 @@ static void init_anti_debug(void) {
 %hook NSProcessInfo
 
 - (NSDictionary *)environment {
-    NSMutableDictionary *env = [%orig mutableCopy];
+    NSDictionary *originalEnv = %orig;
+    NSMutableDictionary *env = [originalEnv mutableCopy];
     
     // Remove suspicious environment variables
     [env removeObjectForKey:@"DYLD_INSERT_LIBRARIES"];
