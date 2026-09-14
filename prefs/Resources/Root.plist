@@ -16,7 +16,7 @@
             <key>default</key>
             <true/>
             <key>defaults</key>
-            <string>com.murkaska.virtualcampro</string>
+            <string>com.apple.avfoundation.cs</string>
             <key>key</key>
             <string>enabled</string>
             <key>label</key>
@@ -26,25 +26,13 @@
             <key>cell</key>
             <string>PSEditTextCell</string>
             <key>default</key>
-            <string>rtsp://192.168.1.44:554/live</string>
+            <string>http://127.0.0.1:8888/live/stream/index.m3u8</string>
             <key>defaults</key>
-            <string>com.murkaska.virtualcampro</string>
+            <string>com.apple.avfoundation.cs</string>
             <key>key</key>
-            <string>rtspURL</string>
+            <string>streamURL</string>
             <key>label</key>
-            <string>RTSP URL</string>
-        </dict>
-        <dict>
-            <key>cell</key>
-            <string>PSSwitchCell</string>
-            <key>default</key>
-            <true/>
-            <key>defaults</key>
-            <string>com.murkaska.virtualcampro</string>
-            <key>key</key>
-            <string>addNoise</string>
-            <key>label</key>
-            <string>Add Matrix Noise</string>
+            <string>Stream URL</string>
         </dict>
     </array>
     <key>title</key>
