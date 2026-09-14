@@ -12,12 +12,16 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang perl xz-utils libssl-dev libplist-dev libxml2-dev curl unzip
+          sudo apt-get install -y build-essential fakeroot rsync curl perl zip git libxml2 libtinfo6 clang xz-utils libssl-dev libplist-dev libxml2-dev
           # Build ldid (required by Theos on Linux)
           git clone https://github.com/ProcursusTeam/ldid.git /tmp/ldid
           cd /tmp/ldid
           make -j2
           sudo cp ldid /usr/local/bin/
+      - name: Install iOS toolchain
+        run: |
+          curl -sL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-x86_64.tar.xz | tar -xJvf - -C $HOME/theos/toolchain/
+          test -x $HOME/theos/toolchain/linux/iphone/bin/clang && echo "toolchain OK" || exit 1
       - name: Install SDK
         run: |
           mkdir -p $HOME/theos/sdks
