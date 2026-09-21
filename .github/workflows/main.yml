@@ -34,6 +34,18 @@ jobs:
           export THEOS=$HOME/theos
           make clean
           make package FINALPACKAGE=1
+      - name: Fix control architecture
+        run: |
+          set -e
+          DEB=$(ls packages/*.deb | head -1)
+          echo "Fixing architecture in $DEB"
+          rm -rf /tmp/deb_fix
+          dpkg-deb -R "$DEB" /tmp/deb_fix
+          sed -i 's/^Architecture: .*/Architecture: iphoneos-arm64e/' /tmp/deb_fix/DEBIAN/control
+          rm -f "$DEB"
+          dpkg-deb -b -Zgzip /tmp/deb_fix "$DEB"
+          echo "----- final control -----"
+          dpkg-deb -f "$DEB"
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
