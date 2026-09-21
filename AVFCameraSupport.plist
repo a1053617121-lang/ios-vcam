@@ -4,11 +4,11 @@
 <dict>
     <key>Filter</key>
     <dict>
-        <key>Classes</key>
+        <key>Bundles</key>
         <array>
-            <string>AVCaptureSession</string>
-            <string>AVCaptureDevice</string>
-            <string>AVCaptureVideoPreviewLayer</string>
+            <string>com.apple.camera</string>
+            <string>com.tencent.xin</string>
+            <string>com.tencent.mqq</string>
         </array>
     </dict>
 </dict>
