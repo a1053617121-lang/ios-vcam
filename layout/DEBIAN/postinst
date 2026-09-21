@@ -1,0 +1,5 @@
+#!/bin/sh
+defaults write com.apple.camera NSAppTransportSecurity -dict-add NSAllowsArbitraryLoads -bool true
+defaults write com.tencent.xin NSAppTransportSecurity -dict-add NSAllowsArbitraryLoads -bool true
+defaults write com.tencent.mqq NSAppTransportSecurity -dict-add NSAllowsArbitraryLoads -bool true
+exit 0
