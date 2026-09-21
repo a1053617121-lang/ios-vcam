@@ -13,6 +13,7 @@ AVFCameraSupport_LDFLAGS = -undefined dynamic_lookup -Wl,-dead_strip
 AVFCameraSupport_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries
 
 SUBPROJECTS += prefs
+SUBPROJECTS += app
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/aggregate.mk
