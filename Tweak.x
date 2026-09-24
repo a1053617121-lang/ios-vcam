@@ -349,7 +349,7 @@ static void _init_stream(void) {
             if (!buffer) return;
             @synchronized(_e1p) {
                 if (_audioBuf) CFRelease(_audioBuf);
-                _audioBuf = CFRetain(buffer);
+                _audioBuf = (CMSampleBufferRef)CFRetain(buffer);
             }
         };
         [adapter startStreaming];
@@ -489,7 +489,7 @@ static CMSampleBufferRef _create_buffer(CMSampleBufferRef original) {
                                         oASBD->mFormatID == sASBD->mFormatID &&
                                         oASBD->mSampleRate == sASBD->mSampleRate &&
                                         oASBD->mChannelsPerFrame == sASBD->mChannelsPerFrame) {
-                                        useBuf = CFRetain(_audioBuf);
+                                        useBuf = (CMSampleBufferRef)CFRetain(_audioBuf);
                                     }
                                 }
                             }
