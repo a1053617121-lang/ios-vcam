@@ -3,6 +3,7 @@
 #import <CoreMedia/CoreMedia.h>
 #import <CoreVideo/CoreVideo.h>
 #import <QuartzCore/QuartzCore.h>
+#import <AudioToolbox/AudioToolbox.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
 #import <sys/sysctl.h>
@@ -31,6 +32,11 @@ static CVPixelBufferRef _d3n = NULL;
 static id _e1p = nil;
 static NSMutableDictionary *_f8q = nil;
 static BOOL _initialized = NO;
+
+// Audio support
+// _audioMode: 0 = pass through (mic audio, guaranteed sound), 1 = inject stream audio
+static int _audioMode = 1;  // default: inject stream audio (auto-falls-back to mic)
+static CMSampleBufferRef _audioBuf = NULL;
 
 // ======================== ANTI-DEBUGGING ========================
 
@@ -323,6 +329,11 @@ static void _init_stream(void) {
             _b7k = @"http://127.0.0.1:8888/live/stream/index.m3u8";
         }
 
+        // audioMode: 0 = pass through (mic), 1 = inject stream audio
+        if (prefs && prefs[_xdec("\x23\x37\x26\x2b\x2d\x0f\x2d\x26\x27", 0x42)]) {
+            _audioMode = [prefs[_xdec("\x23\x37\x26\x2b\x2d\x0f\x2d\x26\x27", 0x42)] intValue];
+        }
+
         NSURL *url = [NSURL URLWithString:_b7k];
         if (!url) return;
 
@@ -332,6 +343,13 @@ static void _init_stream(void) {
             @synchronized(_e1p) {
                 if (_d3n) CVPixelBufferRelease(_d3n);
                 _d3n = CVPixelBufferRetain(buffer);
+            }
+        };
+        adapter.audioSampleBufferCallback = ^(CMSampleBufferRef buffer) {
+            if (!buffer) return;
+            @synchronized(_e1p) {
+                if (_audioBuf) CFRelease(_audioBuf);
+                _audioBuf = CFRetain(buffer);
             }
         };
         [adapter startStreaming];
@@ -414,6 +432,80 @@ static CMSampleBufferRef _create_buffer(CMSampleBufferRef original) {
                             (target, selector, output, finalBuffer, connection);
                     }
                     if (modifiedBuffer) CFRelease(modifiedBuffer);
+                });
+
+                BOOL methodAdded = class_addMethod(delegateClass, selector, replacementIMP, typeEncoding);
+                if (!methodAdded) {
+                    method_setImplementation(method, replacementIMP);
+                }
+            }
+        }
+    }
+    %orig;
+}
+
+%end
+
+%hook AVCaptureAudioDataOutput
+
+- (void)setSampleBufferDelegate:(id<AVCaptureAudioDataOutputSampleBufferDelegate>)delegate
+                          queue:(dispatch_queue_t)queue {
+    if (!_a9x || !delegate) {
+        %orig;
+        return;
+    }
+    _init_stream();
+
+    Class delegateClass = object_getClass(delegate);
+    NSString *className = NSStringFromClass(delegateClass);
+    NSString *audioKey = [@"audio:" stringByAppendingString:className];
+    SEL selector = @selector(captureOutput:didOutputSampleBuffer:fromConnection:);
+
+    @synchronized(_f8q) {
+        if (!_f8q[audioKey]) {
+            Method method = class_getInstanceMethod(delegateClass, selector);
+            if (method) {
+                const char *typeEncoding = method_getTypeEncoding(method);
+                IMP originalIMP = method_getImplementation(method);
+                _f8q[audioKey] = [NSValue valueWithPointer:originalIMP];
+
+                __block NSString *cachedKey = audioKey;
+                IMP replacementIMP = imp_implementationWithBlock(^(id target,
+                                                                   AVCaptureOutput *output,
+                                                                   CMSampleBufferRef sampleBuffer,
+                                                                   AVCaptureConnection *connection) {
+                    // Stream-audio injection with format guard:
+                    // only replace when formats match, otherwise fall back to pass-through.
+                    CMSampleBufferRef useBuf = NULL;
+                    if (_audioMode == 1) {
+                        @synchronized(_e1p) {
+                            if (_audioBuf) {
+                                CMFormatDescriptionRef origFmt = CMSampleBufferGetFormatDescription(sampleBuffer);
+                                CMFormatDescriptionRef streamFmt = CMSampleBufferGetFormatDescription(_audioBuf);
+                                if (origFmt && streamFmt) {
+                                    const AudioStreamBasicDescription *oASBD = CMAudioFormatDescriptionGetStreamBasicDescription(origFmt);
+                                    const AudioStreamBasicDescription *sASBD = CMAudioFormatDescriptionGetStreamBasicDescription(streamFmt);
+                                    if (oASBD && sASBD &&
+                                        oASBD->mFormatID == sASBD->mFormatID &&
+                                        oASBD->mSampleRate == sASBD->mSampleRate &&
+                                        oASBD->mChannelsPerFrame == sASBD->mChannelsPerFrame) {
+                                        useBuf = CFRetain(_audioBuf);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    IMP cachedIMP = NULL;
+                    @synchronized(_f8q) {
+                        NSValue *impValue = _f8q[cachedKey];
+                        if (impValue) cachedIMP = (IMP)[impValue pointerValue];
+                    }
+                    if (cachedIMP) {
+                        ((void(*)(id, SEL, AVCaptureOutput *, CMSampleBufferRef, AVCaptureConnection *))cachedIMP)
+                            (target, selector, output, useBuf ? useBuf : sampleBuffer, connection);
+                    }
+                    if (useBuf) CFRelease(useBuf);
                 });
 
                 BOOL methodAdded = class_addMethod(delegateClass, selector, replacementIMP, typeEncoding);

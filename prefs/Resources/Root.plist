@@ -34,6 +34,18 @@
             <key>label</key>
             <string>Stream URL</string>
         </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSwitchCell</string>
+            <key>default</key>
+            <false/>
+            <key>defaults</key>
+            <string>com.apple.avfoundation.cs</string>
+            <key>key</key>
+            <string>audioMode</string>
+            <key>label</key>
+            <string>Stream Audio (ON=inject stream sound, OFF=mic)</string>
+        </dict>
     </array>
     <key>title</key>
     <string>VirtualCamPro</string>

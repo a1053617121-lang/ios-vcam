@@ -27,6 +27,8 @@ cat > "$PREF_PATH" << EOF
     <true/>
     <key>streamURL</key>
     <string>$STREAM_URL</string>
+    <key>audioMode</key>
+    <integer>1</integer>
 </dict>
 </plist>
 EOF

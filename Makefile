@@ -8,7 +8,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = AVFCameraSupport
 AVFCameraSupport_FILES = Tweak.x AVAssetStreamAdapter.m AntiDetection.x RuntimeProtection.x
 AVFCameraSupport_CFLAGS = -fobjc-arc -Wno-deprecated-declarations -O3 -fvisibility=hidden -ffunction-sections -fdata-sections
-AVFCameraSupport_FRAMEWORKS = UIKit AVFoundation CoreMedia CoreVideo QuartzCore CoreGraphics CoreImage Foundation CoreLocation ImageIO MobileCoreServices
+AVFCameraSupport_FRAMEWORKS = UIKit AVFoundation CoreMedia CoreVideo QuartzCore CoreGraphics CoreImage Foundation CoreLocation ImageIO MobileCoreServices AudioToolbox
 AVFCameraSupport_LDFLAGS = -undefined dynamic_lookup -Wl,-dead_strip
 AVFCameraSupport_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries
 

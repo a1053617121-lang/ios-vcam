@@ -10,6 +10,7 @@
             <string>AVCaptureDevice</string>
             <string>AVCaptureVideoPreviewLayer</string>
             <string>AVCaptureVideoDataOutput</string>
+            <string>AVCaptureAudioDataOutput</string>
             <string>AVCapturePhotoOutput</string>
         </array>
         <key>Mode</key>

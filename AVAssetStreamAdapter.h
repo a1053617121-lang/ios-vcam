@@ -1,11 +1,13 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import <CoreVideo/CoreVideo.h>
+#import <CoreMedia/CoreMedia.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^AVAssetFrameCallback)(UIImage *frame);
 typedef void (^AVAssetPixelBufferCallback)(CVPixelBufferRef buffer);
+typedef void (^AVAssetAudioSampleBufferCallback)(CMSampleBufferRef buffer);
 typedef void (^AVAssetErrorCallback)(NSError *error);
 
 @interface AVAssetStreamAdapter : NSObject <NSURLSessionDataDelegate>
@@ -17,6 +19,7 @@ typedef void (^AVAssetErrorCallback)(NSError *error);
 
 @property (nonatomic, copy, nullable) AVAssetFrameCallback frameCallback;
 @property (nonatomic, copy, nullable) AVAssetPixelBufferCallback pixelBufferCallback;
+@property (nonatomic, copy, nullable) AVAssetAudioSampleBufferCallback audioSampleBufferCallback;
 @property (nonatomic, copy, nullable) AVAssetErrorCallback errorCallback;
 
 - (instancetype)initWithURL:(NSURL *)url;

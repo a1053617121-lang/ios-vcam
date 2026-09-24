@@ -23,6 +23,9 @@
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic, assign) BOOL isHLS;
 
+@property (nonatomic, strong) AVAssetReader *audioAssetReader;
+@property (nonatomic, strong) AVAssetReaderTrackOutput *audioTrackOutput;
+
 @property (nonatomic, assign, readwrite) BOOL isConnecting;
 @end
 
@@ -56,6 +59,7 @@
 
     if (_isHLS) {
         [self startHLSStream];
+        [self startAudioExtraction];
     } else {
         [self startMJPEGStream];
     }
@@ -67,6 +71,7 @@
     _isConnecting = NO;
 
     if (_isHLS) {
+        [self stopAudioExtraction];
         [self stopHLSStream];
     } else {
         [self stopMJPEGStream];
@@ -170,6 +175,75 @@
         self.hlsPlayerItem = nil;
         self.videoOutput = nil;
     });
+}
+
+// ======================== AUDIO EXTRACTION (HLS) ========================
+
+- (void)startAudioExtraction {
+    if (!_isHLS) return;
+    if (self.audioAssetReader) return;
+
+    StreamLog(@"[Audio] starting audio extraction...");
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        if (!self.isRunning) return;
+
+        AVURLAsset *asset = (AVURLAsset *)self.hlsPlayerItem.asset;
+        NSError *readerError = nil;
+        AVAssetReader *reader = [AVAssetReader assetReaderWithAsset:asset error:&readerError];
+        if (!reader) {
+            StreamLog(@"[Audio] reader init failed: %@", readerError.localizedDescription);
+            return;
+        }
+
+        NSArray *audioTracks = [asset tracksWithMediaType:AVMediaTypeAudio];
+        if (audioTracks.count == 0) {
+            StreamLog(@"[Audio] stream has no audio track");
+            return;
+        }
+
+        // nil outputSettings = stream native format (e.g. AAC).
+        AVAssetReaderTrackOutput *audioOutput =
+            [[AVAssetReaderTrackOutput alloc] initWithTrack:audioTracks[0] outputSettings:nil];
+        [reader addOutput:audioOutput];
+
+        if (![reader startReading]) {
+            StreamLog(@"[Audio] startReading failed: %@", reader.error.localizedDescription);
+            return;
+        }
+
+        self.audioAssetReader = reader;
+        self.audioTrackOutput = audioOutput;
+        StreamLog(@"[Audio] extraction running");
+
+        while (self.isRunning && reader.status == AVAssetReaderStatusReading) {
+            CMSampleBufferRef sampleBuffer = [audioOutput copyNextSampleBuffer];
+            if (!sampleBuffer) break;
+
+            if (self.audioSampleBufferCallback) {
+                self.audioSampleBufferCallback(sampleBuffer);
+            }
+            CFRelease(sampleBuffer);
+        }
+
+        if (reader.status == AVAssetReaderStatusCompleted) {
+            StreamLog(@"[Audio] extraction completed");
+            [reader cancelReading];
+            self.audioAssetReader = nil;
+            self.audioTrackOutput = nil;
+        }
+    });
+}
+
+- (void)stopAudioExtraction {
+    AVAssetReader *reader = self.audioAssetReader;
+    if (reader) {
+        if (reader.status == AVAssetReaderStatusReading) {
+            [reader cancelReading];
+        }
+        self.audioAssetReader = nil;
+        self.audioTrackOutput = nil;
+        StreamLog(@"[Audio] extraction stopped");
+    }
 }
 
 - (void)startMJPEGStream {
